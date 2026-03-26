@@ -15,6 +15,7 @@ public class Transaction {
     private LocalDate date;
     private Double amount;
     private String category;
+    private String type;
 
     @ManyToOne
     @JoinColumn(name = "User_id")
@@ -25,13 +26,14 @@ public class Transaction {
     }
 
 
-    public Transaction(Integer id, String description, LocalDate date, Double amount, String category, User user) {
+    public Transaction(Integer id, String description, LocalDate date, Double amount, String category, User user, String type) {
         this.id = id;
         this.description = description;
         this.date = date;
         this.amount = amount;
         this.category = category;
         this.user = user;
+        this.type = type;
     }
 
 
@@ -59,6 +61,8 @@ public class Transaction {
         return category;
     }
 
+    public String getType() { return type; }
+
     public void setId(Integer id) {
         this.id = id;
     }
@@ -82,4 +86,6 @@ public class Transaction {
     public void setCategory(String category) {
         this.category = category;
     }
+
+    public void setType(String type) { this.type = type; }
 }
