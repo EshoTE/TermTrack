@@ -1,6 +1,7 @@
 package org.example.termtrackbackend.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ public class Transaction {
     private String category;
     private String type;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "User_id")
     private User user;
