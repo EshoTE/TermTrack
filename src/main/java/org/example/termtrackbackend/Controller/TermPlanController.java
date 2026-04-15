@@ -40,6 +40,9 @@ public class TermPlanController {
                     termPlan1.setEndDate(termPlan.getEndDate());
                     termPlan1.setStartDate(termPlan.getStartDate());
                     termPlan1.setTotalBudget(termPlan.getTotalBudget());
+                    termPlan1.setAcademicYear(termPlan.getAcademicYear());
+                    termPlan1.setYearOfStudy(termPlan.getYearOfStudy());
+                    termPlan1.setWeeklyBudget(termPlan.getWeeklyBudget());
                     return termPlanRepository.save(termPlan1);
                 }).orElseThrow(() -> new TermPlanNotFoundException(id));
     }
