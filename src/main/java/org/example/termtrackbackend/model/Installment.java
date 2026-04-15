@@ -1,6 +1,6 @@
 package org.example.termtrackbackend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,9 +21,9 @@ public class Installment {
     private String label;
 
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "term_plan_id")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private TermPlan termPlan;
 
 
