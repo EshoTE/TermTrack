@@ -26,6 +26,7 @@ public class TermPlan {
     private String yearOfStudy;
     private Double weeklyBudget;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
