@@ -1,8 +1,10 @@
 package org.example.termtrackbackend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,9 +28,9 @@ public class TermPlan {
     private String yearOfStudy;
     private Double weeklyBudget;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private User user;
 
     @OneToMany(mappedBy = "termPlan", cascade = CascadeType.ALL)
