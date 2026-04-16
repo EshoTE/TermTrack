@@ -48,7 +48,9 @@ public class UserController {
                 .map(user -> {
                     user.setName(newUser.getName());
                     user.setEmail(newUser.getEmail());
-                    user.setPassword(newUser.getPassword());
+                    if (newUser.getPassword() != null && !newUser.getPassword().isEmpty()) {
+                        user.setPassword(passwordEncoder.encode(newUser.getPassword()));
+                    }
                     return userRepository.save(user);
                 }).orElseThrow(() -> new UserNotFoundException(id));
     }
