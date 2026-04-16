@@ -1,10 +1,13 @@
 package org.example.termtrackbackend.Controller;
 
+import org.example.termtrackbackend.config.JwtService;
 import org.example.termtrackbackend.exception.InstallmentNotFoundException;
 import org.example.termtrackbackend.model.Installment;
 import org.example.termtrackbackend.repository.InstallmentRepository;
+import org.example.termtrackbackend.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
@@ -12,19 +15,32 @@ import java.util.List;
 public class InstallmentController {
 
     private final InstallmentRepository installmentRepository;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public InstallmentController(InstallmentRepository installmentRepository) {
+    public InstallmentController(InstallmentRepository installmentRepository, JwtService jwtService, UserRepository userRepository) {
         this.installmentRepository = installmentRepository;
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
+    }
+
+    private Integer getUserIdFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        String email = jwtService.extractUsername(token);
+        return userRepository.findByEmail(email).orElseThrow().getId();
     }
 
     @GetMapping("/installments")
-    public List<Installment> getInstallments() { return installmentRepository.findAll(); }
+    public List<Installment> getInstallments(HttpServletRequest request) {
+        Integer userId = getUserIdFromRequest(request);
+        return installmentRepository.findByTermPlanUserId(userId);
+    }
 
     @GetMapping("/installment/{id}")
     public Installment getInstallmentById(@PathVariable Integer id) {
         return installmentRepository.findById(id)
-                    .orElseThrow(() -> new InstallmentNotFoundException(id)); }
-
+                .orElseThrow(() -> new InstallmentNotFoundException(id));
+    }
 
     @PostMapping("/installment")
     public Installment createInstallment(@RequestBody Installment installment) {
@@ -43,10 +59,11 @@ public class InstallmentController {
     }
 
     @DeleteMapping("/installment/{id}")
-    public void deleteInstallment(@PathVariable Integer id) {
+    public String deleteInstallment(@PathVariable Integer id) {
         if (!installmentRepository.existsById(id)) {
             throw new InstallmentNotFoundException(id);
         }
         installmentRepository.deleteById(id);
+        return "Installment deleted";
     }
 }

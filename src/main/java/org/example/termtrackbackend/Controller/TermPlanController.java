@@ -1,24 +1,39 @@
 package org.example.termtrackbackend.Controller;
 
+import org.example.termtrackbackend.config.JwtService;
 import org.example.termtrackbackend.exception.TermPlanNotFoundException;
 import org.example.termtrackbackend.model.TermPlan;
 import org.example.termtrackbackend.repository.TermPlanRepository;
+import org.example.termtrackbackend.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
 public class TermPlanController {
-    private final TermPlanRepository termPlanRepository;
 
-    public TermPlanController(TermPlanRepository termPlanRepository) {
+    private final TermPlanRepository termPlanRepository;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
+
+    public TermPlanController(TermPlanRepository termPlanRepository, JwtService jwtService, UserRepository userRepository) {
         this.termPlanRepository = termPlanRepository;
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
+    }
+
+    private Integer getUserIdFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        String email = jwtService.extractUsername(token);
+        return userRepository.findByEmail(email).orElseThrow().getId();
     }
 
     @GetMapping("/termPlans")
-    public List<TermPlan> getAllTermPlans() {
-        return termPlanRepository.findAll();
+    public List<TermPlan> getAllTermPlans(HttpServletRequest request) {
+        Integer userId = getUserIdFromRequest(request);
+        return termPlanRepository.findByUserId(userId);
     }
 
     @GetMapping("/termPlan/{id}")
@@ -35,7 +50,7 @@ public class TermPlanController {
     @PutMapping("/termPlan/{id}")
     public TermPlan updateTermPlan(@PathVariable Integer id, @RequestBody TermPlan termPlan) {
         return termPlanRepository.findById(id)
-                .map( termPlan1 -> {
+                .map(termPlan1 -> {
                     termPlan1.setTermName(termPlan.getTermName());
                     termPlan1.setEndDate(termPlan.getEndDate());
                     termPlan1.setStartDate(termPlan.getStartDate());
@@ -48,10 +63,11 @@ public class TermPlanController {
     }
 
     @DeleteMapping("/termPlan/{id}")
-    public void deleteTermPlan(@PathVariable Integer id) {
+    public String deleteTermPlan(@PathVariable Integer id) {
         if (!termPlanRepository.existsById(id)) {
             throw new TermPlanNotFoundException(id);
         }
         termPlanRepository.deleteById(id);
+        return "Term plan deleted";
     }
 }

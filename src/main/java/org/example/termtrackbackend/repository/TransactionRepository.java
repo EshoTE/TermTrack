@@ -3,6 +3,8 @@ package org.example.termtrackbackend.repository;
 import org.example.termtrackbackend.model.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TransactionRepository  extends JpaRepository<Transaction, Integer> {
+import java.util.List;
 
+public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
+    List<Transaction> findByUserId(Integer userId);
 }
