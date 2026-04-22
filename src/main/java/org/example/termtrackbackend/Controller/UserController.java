@@ -1,15 +1,14 @@
 package org.example.termtrackbackend.Controller;
 
+import org.example.termtrackbackend.config.JwtService;
 import org.example.termtrackbackend.exception.UserNotFoundException;
 import org.example.termtrackbackend.model.User;
 import org.example.termtrackbackend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
-
-import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -17,34 +16,46 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
-    @GetMapping("/users")
-    public List<User> getUsers() {
-        return userRepository.findAll();
+    private Integer getUserIdFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        String email = jwtService.extractUsername(token);
+        return userRepository.findByEmail(email).orElseThrow().getId();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+        Integer userId = getUserIdFromRequest(request);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/user/{id}")
-    public User getUser (@PathVariable Integer id) {
-        return userRepository.findById(id)
+    public ResponseEntity<?> getUser(@PathVariable Integer id, HttpServletRequest request) {
+        Integer authenticatedUserId = getUserIdFromRequest(request);
+        if (!authenticatedUserId.equals(id)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
+        return ResponseEntity.ok(user);
     }
-
-
-    @PostMapping("/user")
-    public User createUser (@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }
-
 
     @PutMapping("/user/{id}")
-    User updateUser(@RequestBody User newUser, @PathVariable Integer id) {
-        return userRepository.findById(id)
+    public ResponseEntity<?> updateUser(@RequestBody User newUser, @PathVariable Integer id, HttpServletRequest request) {
+        Integer authenticatedUserId = getUserIdFromRequest(request);
+        if (!authenticatedUserId.equals(id)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+        User updated = userRepository.findById(id)
                 .map(user -> {
                     user.setName(newUser.getName());
                     user.setEmail(newUser.getEmail());
@@ -53,15 +64,19 @@ public class UserController {
                     }
                     return userRepository.save(user);
                 }).orElseThrow(() -> new UserNotFoundException(id));
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/user/{id}")
-    public String deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Integer id, HttpServletRequest request) {
+        Integer authenticatedUserId = getUserIdFromRequest(request);
+        if (!authenticatedUserId.equals(id)) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(id);
         }
         userRepository.deleteById(id);
-        return "Account deleted";
+        return ResponseEntity.ok("Account deleted");
     }
-
 }
