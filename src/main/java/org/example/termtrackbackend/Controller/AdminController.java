@@ -5,27 +5,29 @@ import org.example.termtrackbackend.model.*;
 import org.example.termtrackbackend.repository.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin")
 public class AdminController {
-
     private final UserRepository userRepository;
     private final TransactionRepository transactionRepository;
     private final TermPlanRepository termPlanRepository;
     private final InstallmentRepository installmentRepository;
+    private final BudgetRepository budgetRepository;
     private final JwtService jwtService;
 
-    public AdminController(UserRepository userRepository, TransactionRepository transactionRepository,
-                           TermPlanRepository termPlanRepository, InstallmentRepository installmentRepository,
+    public AdminController(UserRepository userRepository,
+                           TransactionRepository transactionRepository,
+                           TermPlanRepository termPlanRepository,
+                           InstallmentRepository installmentRepository,
+                           BudgetRepository budgetRepository,
                            JwtService jwtService) {
         this.userRepository = userRepository;
         this.transactionRepository = transactionRepository;
         this.termPlanRepository = termPlanRepository;
         this.installmentRepository = installmentRepository;
+        this.budgetRepository = budgetRepository;
         this.jwtService = jwtService;
     }
 
@@ -58,6 +60,12 @@ public class AdminController {
     public ResponseEntity<?> getAllInstallments(HttpServletRequest request) {
         if (!isAdmin(request)) return ResponseEntity.status(403).body("Access denied");
         return ResponseEntity.ok(installmentRepository.findAll());
+    }
+
+    @GetMapping("/budgets")
+    public ResponseEntity<?> getAllBudgets(HttpServletRequest request) {
+        if (!isAdmin(request)) return ResponseEntity.status(403).body("Access denied");
+        return ResponseEntity.ok(budgetRepository.findAll());
     }
 
     @DeleteMapping("/user/{id}")
