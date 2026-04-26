@@ -55,16 +55,21 @@ public class UserController {
         if (!authenticatedUserId.equals(id)) {
             return ResponseEntity.status(403).body("Access denied");
         }
-        User updated = userRepository.findById(id)
+
+        return userRepository.findById(id)
                 .map(user -> {
+                    if (newUser.getEmail() != null && !newUser.getEmail().equals(user.getEmail())) {
+                        if (userRepository.findByEmail(newUser.getEmail()).isPresent()) {
+                            return ResponseEntity.status(409).body("Email already registered");
+                        }
+                        user.setEmail(newUser.getEmail());
+                    }
                     user.setName(newUser.getName());
-                    user.setEmail(newUser.getEmail());
                     if (newUser.getPassword() != null && !newUser.getPassword().isEmpty()) {
                         user.setPassword(passwordEncoder.encode(newUser.getPassword()));
                     }
-                    return userRepository.save(user);
+                    return ResponseEntity.ok(userRepository.save(user));
                 }).orElseThrow(() -> new UserNotFoundException(id));
-        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/user/{id}")
