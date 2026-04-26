@@ -5,6 +5,7 @@ import org.example.termtrackbackend.exception.TermPlanNotFoundException;
 import org.example.termtrackbackend.model.TermPlan;
 import org.example.termtrackbackend.repository.TermPlanRepository;
 import org.example.termtrackbackend.repository.UserRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,11 +64,16 @@ public class TermPlanController {
     }
 
     @DeleteMapping("/termPlan/{id}")
-    public String deleteTermPlan(@PathVariable Integer id) {
-        if (!termPlanRepository.existsById(id)) {
-            throw new TermPlanNotFoundException(id);
-        }
-        termPlanRepository.deleteById(id);
-        return "Term plan deleted";
+    public ResponseEntity<?> deleteTermPlan(@PathVariable Integer id, HttpServletRequest request) {
+        Integer userId = getUserIdFromRequest(request);
+        return termPlanRepository.findById(id)
+                .map(termPlan -> {
+                    if (!termPlan.getUser().getId().equals(userId)) {
+                        return ResponseEntity.status(403).body("Access denied");
+                    }
+                    termPlanRepository.deleteById(id);
+                    return ResponseEntity.ok("Term plan deleted");
+                })
+                .orElseThrow(() -> new TermPlanNotFoundException(id));
     }
 }
